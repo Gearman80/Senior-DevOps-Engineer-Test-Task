@@ -1,0 +1,68 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_CREDENTIALS_ID = 'xxxxxxxxxxxxxxxxxxxxxxxxx' // Set this to the ID of your AWS credentials in Jenkins
+        EKS_CLUSTER_NAME = 'my-eks-test-cluster'     // Name of your EKS cluster
+        KUBECONFIG_FILE = 'kubeconfig'                // Temporary kubeconfig file
+        HELM_RELEASE_NAME = 'elvis-sample-app'       // Helm release name
+        HELM_CHART_PATH = './elvis-sample-app'         // Path to your Helm chart
+        NAMESPACE = 'sample-app'                        // Kubernetes namespace (default or custom)
+    }
+
+    stages {
+        stage('Setup Environment') {
+            steps {
+                script {
+                    // Ensure dependencies are installed
+                    sh 'aws --version'
+                    sh 'kubectl version --client=true'
+                    sh 'helm version'
+                }
+            }
+        }
+
+        stage('Authenticate with AWS') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
+                    script {
+                        // Fetch kubeconfig for the EKS cluster
+                        sh "aws eks update-kubeconfig --name ${EKS_CLUSTER_NAME} --kubeconfig ${KUBECONFIG_FILE}"
+                    }
+                }
+            }
+        }
+
+        stage('Lint Helm Chart') {
+            steps {
+                script {
+                    sh "helm lint ${HELM_CHART_PATH}"
+                }
+            }
+        }
+
+        stage('Helm Deployment') {
+            steps {
+                script {
+                    // Deploy or upgrade using Helm
+                    sh "helm upgrade --install ${HELM_RELEASE_NAME} ${HELM_CHART_PATH} --namespace ${NAMESPACE} --kubeconfig ${KUBECONFIG_FILE}"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                // Clean up kubeconfig file
+                sh "rm -f ${KUBECONFIG_FILE}"
+            }
+        }
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed.'
+        }
+    }
+}

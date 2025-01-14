@@ -116,7 +116,7 @@ service/prometheus-server                     LoadBalancer   10.100.36.164    ad
 ```
 - Check promotherus targets 
 
-![screenshot prometheus targets](./screenshots/prometheus-targets.png)
+![screenshot prometheus targets](./screenshots/prometheus-targets.jpeg)
 
 
 - deploy Grafana using Helm chart
@@ -220,7 +220,7 @@ spec:
 ```
 
 - Test access to the ingress on `/elvis` path: 
-![screenshot ingress](./sreenshots/ingress-screenshot.png)
+![screenshot ingress](./screenshots/ingress-screenshot.png)
 
 
 ## Task6:  Database Setup: Deploy a simple Redis or MySQL/PostgreSQL database and connect the application.
